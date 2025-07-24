@@ -5,6 +5,8 @@ from scipy.special import psi
 
 from sklearn.cluster import kmeans_plusplus
 
+from scipy.stats import multivariate_t
+
 class GaussianMixtureModel:
 
     def __init__(self, X : np.ndarray, M : int):
@@ -62,6 +64,8 @@ class GaussianMixtureModel:
         self.Sigma = np.zeros(shape = (self.M, self.D, self.D))
 
         self.Lambda = np.zeros(shape = (self.M, self.D, self.D))
+
+        self.predictive = lambda : None
 
     def initialize_parameters(self) -> None:
 
@@ -248,3 +252,23 @@ class GaussianMixtureModel:
                 break
 
         self.estimates_parameters()
+
+    def estimates_predictive(self, X : np.ndarray) -> float:
+
+        density = 0
+
+        for m in range(self.M):
+
+            density += self.pi[m]*multivariate_t.pdf(
+
+                x = X,
+
+                loc = self.mu[m],
+
+                df = self.nu[m] + 1 - self.D,
+
+                shape = (self.tau[m] + 1)/self.tau[m]*self.Phi[m]/(self.nu[m] + 1 - self.D)
+
+            )
+        
+        return density
